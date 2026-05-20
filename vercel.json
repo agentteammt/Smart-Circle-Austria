@@ -1,5 +1,5 @@
 {
-    "rewrites": [
-          { "source": "/", "destination": "/Smart Circle Austria (1).html" }
-    ]
+      "rewrites": [
+              { "source": "/", "destination": "/Smart%20Circle%20Austria%20(1).html" }
+      ]
 }
