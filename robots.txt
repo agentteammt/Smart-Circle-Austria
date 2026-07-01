@@ -1,0 +1,7 @@
+# robots.txt — Smart Circle Austria
+# ► Ersetzen Sie www.smart-circle-austria.com durch Ihre echte Live-Domain (z. B. www.smartcircle.at)
+
+User-agent: *
+Allow: /
+
+Sitemap: https://www.smart-circle-austria.com/sitemap.xml
