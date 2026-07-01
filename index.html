@@ -1458,6 +1458,16 @@ html { scrollbar-color: #ED2939 #fafafa; scrollbar-width: thin; }
 
 const { useState, useEffect, useRef } = React;
 
+/* ═══════════════════════════════════════════════════════════════════
+   BACKEND-KONFIGURATION  ·  Supabase + Resend (E-Mail)
+   ──────────────────────────────────────────────────────────────────
+   Nach dem Anlegen des Supabase-Projekts hier eintragen:
+   Supabase → Project Settings → API → Project URL  +  anon public key.
+   (Der anon-Key ist öffentlich und darf im Frontend stehen.)
+═══════════════════════════════════════════════════════════════════ */
+const SUPABASE_URL      = 'https://DEIN-PROJEKT.supabase.co';  /* ◄◄◄ eintragen */
+const SUPABASE_ANON_KEY = 'DEIN_ANON_PUBLIC_KEY';              /* ◄◄◄ eintragen */
+
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accentColor": "#ED2939",
   "showStats": true
@@ -2535,8 +2545,36 @@ function SectionKontakt({ accent }) {
   const [form, setForm] = useState({ name: '', company: '', role: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(false);
+  const [hp, setHp] = useState(''); // Honeypot gegen Spam-Bots
   const validate = () => {const e = {};if (!form.name) e.name = true;if (!form.email || !form.email.includes('@')) e.email = true;if (!form.message) e.message = true;return e;};
-  const handleSubmit = (ev) => {ev.preventDefault();const e = validate();if (Object.keys(e).length) {setErrors(e);return;}setSubmitted(true);};
+  const handleSubmit = async (ev) => {
+    ev.preventDefault();
+    const e = validate();
+    if (Object.keys(e).length) { setErrors(e); return; }
+    setErrors({});
+    setSendError(false);
+    setSending(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/kontakt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ ...form, website: hp })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      setSubmitted(true);
+    } catch (err) {
+      console.error('[Kontakt] Versand fehlgeschlagen:', err);
+      setSendError(true);
+    } finally {
+      setSending(false);
+    }
+  };
   return (
     <section id="kontakt" style={{ background: '#F5F5F5', padding: '120px 0', position: 'relative', overflow: 'hidden' }}>
       <img className="bg-asset" src="uploads/smart-austria-logo-glow-hintergrund.png.webp" alt="" style={{ top: '50%', right: '-100px', transform: 'translateY(-50%)', width: '40%', maxWidth: 520, opacity: 0.22, animation: 'bgDrift 10s ease-in-out 1s infinite' }} />
@@ -2560,6 +2598,7 @@ function SectionKontakt({ accent }) {
               </div> :
 
             <form onSubmit={handleSubmit} className="stagger-children" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <input type="text" name="website" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
                 <div className="fade-up scale-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <input placeholder="Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={{ borderColor: errors.name ? accent : '#E0E0E0' }} />
@@ -2578,11 +2617,16 @@ function SectionKontakt({ accent }) {
                   <textarea placeholder="Nachricht *" rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} style={{ borderColor: errors.message ? accent : '#E0E0E0' }} />
                   {errors.message && <div style={{ fontSize: 12, color: accent, marginTop: 4 }}>Pflichtfeld</div>}
                 </div>
-                <button type="submit" className="btn-primary fade-up scale-in" style={{ background: accent, borderColor: accent, color: '#fff', justifyContent: 'center', fontSize: 15, padding: '16px 24px' }}
-              onMouseEnter={(e) => {e.currentTarget.style.background = '#fff';e.currentTarget.style.color = accent;}}
+                <button type="submit" disabled={sending} className="btn-primary fade-up scale-in" style={{ background: accent, borderColor: accent, color: '#fff', justifyContent: 'center', fontSize: 15, padding: '16px 24px', opacity: sending ? 0.7 : 1, cursor: sending ? 'wait' : undefined }}
+              onMouseEnter={(e) => { if (sending) return; e.currentTarget.style.background = '#fff';e.currentTarget.style.color = accent;}}
               onMouseLeave={(e) => {e.currentTarget.style.background = accent;e.currentTarget.style.color = '#fff';}}>
-                  Anfrage senden →
+                  {sending ? 'Wird gesendet …' : 'Anfrage senden →'}
                 </button>
+                {sendError &&
+                <div className="fade-up" style={{ fontSize: 14, color: accent, fontWeight: 600, textAlign: 'center' }}>
+                  Senden fehlgeschlagen. Bitte später erneut versuchen oder direkt an <a href="mailto:m.manich@team-mt.de" style={{ color: accent }}>m.manich@team-mt.de</a> schreiben.
+                </div>
+                }
               </form>
             }
           </div>
@@ -2629,12 +2673,12 @@ function Footer({ accent }) {
             {links.map((l) => <a key={l} href={`#${l.toLowerCase()}`} className="nav-link" style={{ fontSize: 13 }}>{l}</a>)}
           </div>
           <div className="fade-up" style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <a href="impressum.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#555', textDecoration: 'none' }}>Impressum</a>
-            <a href="datenschutz.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#555', textDecoration: 'none' }}>Datenschutz</a>
+            <a href="impressum.html" rel="noopener noreferrer" style={{ fontSize: 13, color: '#555', textDecoration: 'none' }}>Impressum</a>
+            <a href="datenschutz.html" rel="noopener noreferrer" style={{ fontSize: 13, color: '#555', textDecoration: 'none' }}>Datenschutz</a>
           </div>
         </div>
         <div className="fade-up" style={{ borderTop: '1px solid #F0F0F0', paddingTop: 20, fontSize: 12, color: '#AAA' }}>
-          © 2025 Smart Circle Austria — Initiiert vom Gründungspartner
+          © 2025 Smart Circle Austria
         </div>
       </div>
     </footer>);
@@ -2923,7 +2967,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
         <p id="cc-banner-desc">
           Wir verwenden Cookies und ähnliche Technologien. Technisch notwendige sind für den Betrieb immer aktiv;
           optionale Cookies für Statistik, Marketing und Komfort nur mit Ihrer jederzeit widerrufbaren Einwilligung.
-          Mehr in der <a href="datenschutz.html" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.
+          Mehr in der <a href="datenschutz.html" rel="noopener noreferrer">Datenschutzerklärung</a>.
         </p>
       </div>
       <div class="cc-actions">
@@ -2950,8 +2994,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
       </div>
       <div class="cc-modal-foot">
         <div class="cc-foot-links">
-          <a href="datenschutz.html" target="_blank" rel="noopener noreferrer">Datenschutz</a>
-          <a href="impressum.html" target="_blank" rel="noopener noreferrer">Impressum</a>
+          <a href="datenschutz.html" rel="noopener noreferrer">Datenschutz</a>
+          <a href="impressum.html" rel="noopener noreferrer">Impressum</a>
         </div>
         <div class="cc-foot-btns">
           <button class="cc-btn cc-btn-outline" id="cc-reject-2" type="button">Alle ablehnen</button>
