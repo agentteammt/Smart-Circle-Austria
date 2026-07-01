@@ -420,6 +420,7 @@ input::placeholder, textarea::placeholder { color: #999; }
 
 /* ── Mobile layout fixes: stack multi-column grids & prevent horizontal overflow ── */
 @media (max-width: 768px) {
+  /* Sections that overflowed on the right — stack their grids to one column */
   .mobile-stack { grid-template-columns: 1fr !important; }
   .proj-row     { gap: 28px !important; margin-bottom: 44px !important; }
   .kontakt-grid { gap: 40px !important; }
@@ -427,6 +428,8 @@ input::placeholder, textarea::placeholder { color: #999; }
   .members-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
   .feat-grid    { gap: 10px !important; }
   .form-row     { grid-template-columns: 1fr !important; }
+  /* Grid children must be allowed to shrink below their content's intrinsic width
+     (long German compound words otherwise blow the track out past the screen). */
   .feat-grid > *, .members-grid > *, .presse-grid > *,
   .kontakt-grid > *, .form-row > *, .proj-row > * { min-width: 0; }
   #projekte, #mitglieder, #presse, #kontakt {
@@ -1481,14 +1484,16 @@ html { scrollbar-color: #ED2939 #fafafa; scrollbar-width: thin; }
 const { useState, useEffect, useRef } = React;
 
 /* ═══════════════════════════════════════════════════════════════════
-   BACKEND-KONFIGURATION  ·  Supabase + Resend (E-Mail)
+   KONTAKTFORMULAR  ·  Web3Forms (E-Mail-Weiterleitung, kein Backend nötig)
    ──────────────────────────────────────────────────────────────────
-   Nach dem Anlegen des Supabase-Projekts hier eintragen:
-   Supabase → Project Settings → API → Project URL  +  anon public key.
-   (Der anon-Key ist öffentlich und darf im Frontend stehen.)
+   So aktivieren (2 Minuten):
+     1. Auf https://web3forms.com die Empfänger-E-Mail eingeben
+        (z. B. m.manich@team-mt.de) → „Create Access Key".
+     2. Der Access Key kommt per E-Mail → unten bei WEB3FORMS_ACCESS_KEY
+        einsetzen. Anfragen gehen dann an genau diese Adresse.
+        Mehrere Empfänger / cc lassen sich im Web3Forms-Dashboard ergänzen.
 ═══════════════════════════════════════════════════════════════════ */
-const SUPABASE_URL      = 'https://DEIN-PROJEKT.supabase.co';  /* ◄◄◄ eintragen */
-const SUPABASE_ANON_KEY = 'DEIN_ANON_PUBLIC_KEY';              /* ◄◄◄ eintragen */
+const WEB3FORMS_ACCESS_KEY = 'fb299ca0-781e-4e8e-880d-cce6b25eb263';  /* ◄◄◄ von web3forms.com eintragen */
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accentColor": "#ED2939",
@@ -2504,12 +2509,12 @@ function SectionManifest({ accent }) {
             <p className="desc">Österreichs führende Köpfe aus Industrie, Tech und Wissenschaft.</p>
           </div>
           <div className="manifest-stat">
-            <span className="num">{counts[1]}<span className="sup">%</span></span>
+            <span className="num">1</span>
             <span className="label">Realisierung</span>
             <p className="desc">Keine Studien, keine PowerPoints. Nur konkrete, umsetzbare Projekte.</p>
           </div>
           <div className="manifest-stat">
-            <span className="num">{counts[2]}</span>
+            <span className="num">26/27</span>
             <span className="label">Vollendung Modell-Park</span>
             <p className="desc">Erster vollständig smart gesteuerter Gewerbepark Österreichs.</p>
           </div>
@@ -2522,9 +2527,8 @@ function SectionManifest({ accent }) {
 // ─── SECTION: PRESSE ─────────────────────────────────────────────────
 function SectionPresse({ accent }) {
   const articles = [
-  { outlet: 'Wirtschaftsblatt', title: 'Smart Circle Austria: Wenn Unternehmen gemeinsam handeln', teaser: 'Eine neue Initiative bringt Österreichs Energie- und Technologiebranche zusammen.', date: 'März 2025' },
-  { outlet: 'Der Standard', title: 'Rechenzentren in Windrädern – ein österreichisches Pilotprojekt', teaser: 'Grüner Strom soll direkt vor Ort in Rechenleistung umgewandelt werden.', date: 'April 2025' },
-  { outlet: 'Trend', title: 'Initiator gründet branchenübergreifendes C-Level Netzwerk', teaser: 'Neun Unternehmen, zwei Projekte, ein Ziel: Österreich als Smart-City-Vorreiter.', date: 'Februar 2025' }];
+  { outlet: 'NEW BUSINESS', title: 'Ein Modell mit großer Zukunft', teaser: 'Im Beisein von Staatssekretärin Elisabeth Zehetner diskutierten die Mitglieder rund um Initiator Rittal Österreich Leuchtturmprojekte – von intelligenten Ladeparks bis zu Rechenzentren in Windkraftanlagen.', date: 'Print-Ausgabe 2025', url: 'presse/new-business-modell-mit-grosser-zukunft.html', cta: 'Artikel lesen →' },
+  { outlet: 'New Business', title: 'Branchenübergreifende Innovationen für die Smart City von morgen', teaser: 'Beim ersten Workshop in Wien arbeiteten die Mitglieder an Kreislaufwirtschaft, Energieeffizienz und Ladeinfrastruktur – mit dem Ziel, bis 2026 erste Proof-of-Concepts vorzustellen.', date: 'Oktober 2025', url: 'https://newbusiness.at/unternehmen/smart-city-von-morgen', cta: 'Zum Artikel →' }];
 
   return (
     <section id="presse" style={{ background: '#fff', padding: '120px 0', position: 'relative', overflow: 'hidden' }}>
@@ -2534,9 +2538,9 @@ function SectionPresse({ accent }) {
         <h2 className="fade-up delay-1" style={{ fontSize: 'clamp(36px,4vw,52px)', fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.02em', margin: '12px 0 56px' }}>
           Smart Circle Austria<br />in den Medien.
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24, marginBottom: 48 }} className="presse-grid mobile-stack">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, marginBottom: 48 }} className="presse-grid mobile-stack">
           {articles.map((a, i) =>
-          <div key={a.title} className={`card-left-border fade-up scale-in delay-${i + 1}`} style={{ borderLeftColor: accent, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <a key={a.title} href={a.url} target="_blank" rel="noopener noreferrer" className={`card-left-border fade-up scale-in delay-${i + 1}`} style={{ borderLeftColor: accent, display: 'flex', flexDirection: 'column', gap: 12, textDecoration: 'none', color: 'inherit' }}>
               <div style={{ height: 40, background: '#F5F5F5', border: '1px solid #E0E0E0', display: 'flex', alignItems: 'center', paddingLeft: 12 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'monospace' }}>{a.outlet}</span>
               </div>
@@ -2544,18 +2548,10 @@ function SectionPresse({ accent }) {
               <div style={{ fontSize: 14, color: '#666', lineHeight: 1.6, flex: 1 }}>{a.teaser}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, color: accent, fontWeight: 700 }}>{a.date}</span>
-                <a href="#" style={{ fontSize: 13, color: accent, fontWeight: 600, textDecoration: 'none' }}>Zum Artikel →</a>
+                <span style={{ fontSize: 13, color: accent, fontWeight: 600 }}>{a.cta}</span>
               </div>
-            </div>
+            </a>
           )}
-        </div>
-        <div className="fade-up" style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="#" className="btn-secondary" style={{ color: accent, borderColor: accent, background: 'transparent' }}
-          onMouseEnter={(e) => {e.currentTarget.style.background = accent;e.currentTarget.style.color = '#fff';}}
-          onMouseLeave={(e) => {e.currentTarget.style.background = 'transparent';e.currentTarget.style.color = accent;}}>Pressemappe herunterladen</a>
-          <a href="#" className="btn-secondary" style={{ color: accent, borderColor: accent, background: 'transparent' }}
-          onMouseEnter={(e) => {e.currentTarget.style.background = accent;e.currentTarget.style.color = '#fff';}}
-          onMouseLeave={(e) => {e.currentTarget.style.background = 'transparent';e.currentTarget.style.color = accent;}}>Pressekontakt aufnehmen</a>
         </div>
       </div>
     </section>);
@@ -2579,16 +2575,27 @@ function SectionKontakt({ accent }) {
     setSendError(false);
     setSending(true);
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/kontakt`, {
+      const res = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'apikey': SUPABASE_ANON_KEY
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({ ...form, website: hp })
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: `Neue Kontaktanfrage: ${form.name}${form.company ? ' (' + form.company + ')' : ''}`,
+          from_name: 'Smart Circle Austria — Website',
+          replyto: form.email,
+          name: form.name,
+          email: form.email,
+          Unternehmen: form.company,
+          Funktion: form.role,
+          message: form.message,
+          botcheck: !!hp
+        })
       });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || ('HTTP ' + res.status));
       setSubmitted(true);
     } catch (err) {
       console.error('[Kontakt] Versand fehlgeschlagen:', err);
@@ -2725,7 +2732,6 @@ function App() {
       <SectionGallery accent={accent} />
       <SectionRoadmap accent={accent} />
       <SectionMitmachen accent={accent} />
-      <SectionManifest accent={accent} />
       <SectionPresse accent={accent} />
       <SectionKontakt accent={accent} />
       <Footer accent={accent} />
