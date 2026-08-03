@@ -2602,7 +2602,7 @@ function SectionKontakt({ accent }) {
   const [errors, setErrors] = useState({});
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(false);
-  const [hp, setHp] = useState(''); // Honeypot gegen Spam-Bots
+  const [hp, setHp] = useState(false); // Honeypot gegen Spam-Bots (Checkbox — wird von Autofill nicht befüllt)
   const validate = () => {const e = {};if (!form.name) e.name = true;if (!form.email || !form.email.includes('@')) e.email = true;if (!form.message) e.message = true;return e;};
   const handleSubmit = async (ev) => {
     ev.preventDefault();
@@ -2664,7 +2664,7 @@ function SectionKontakt({ accent }) {
               </div> :
 
             <form onSubmit={handleSubmit} className="stagger-children" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <input type="text" name="website" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
+                <input type="checkbox" name="botcheck" tabIndex={-1} autoComplete="off" checked={!!hp} onChange={(e) => setHp(e.target.checked)} aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
                 <div className="fade-up scale-in form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <input placeholder="Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={{ borderColor: errors.name ? accent : '#E0E0E0' }} />
@@ -2689,7 +2689,7 @@ function SectionKontakt({ accent }) {
                   {sending ? 'Wird gesendet …' : 'Anfrage senden →'}
                 </button>
                 {sendError &&
-                <div className="fade-up" style={{ fontSize: 14, color: accent, fontWeight: 600, textAlign: 'center' }}>
+                <div style={{ fontSize: 14, color: accent, fontWeight: 600, textAlign: 'center' }}>
                   Senden fehlgeschlagen. Bitte später erneut versuchen oder direkt an <a href="mailto:m.manich@team-mt.de" style={{ color: accent }}>m.manich@team-mt.de</a> schreiben.
                 </div>
                 }
